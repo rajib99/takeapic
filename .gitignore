@@ -1,0 +1,10 @@
+node_modules
+.next
+.env*.local
+.env
+.vercel
+next-env.d.ts
+*.tsbuildinfo
+
+# optimized client media; lives on Vercel Blob, not in git
+public/media/

@@ -1,0 +1,15 @@
+# Take a pic
+
+> Photo booth rental in New York featuring an AI robot photographer and a drone that supports a 360° camera. Weddings, corporate events and open-space parties.
+
+## Packages
+- Basic: mirror booth, red carpet, 360 camera, no backdrop
+- Premium: Basic plus custom backdrop
+- Lux: Premium plus AI robot photographer, drone-assisted 360 coverage and magazine-style booth
+
+## Pages
+- [Packages](https://takeabic.biz/packages)
+- [How it works](https://takeabic.biz/how-it-works)
+- [FAQ](https://takeabic.biz/faq)
+- [Book](https://takeabic.biz/book)
+- [Contact](https://takeabic.biz/contact)

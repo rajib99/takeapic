@@ -8,3 +8,4 @@ next-env.d.ts
 
 # optimized client media; lives on Vercel Blob, not in git
 public/media/
+.env*

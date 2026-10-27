@@ -10,8 +10,10 @@ import { join, relative } from "node:path";
 const ROOT = new URL("..", import.meta.url).pathname;
 const DIR = join(ROOT, "public/media");
 const local = process.argv.includes("--local");
-if (!local && !process.env.BLOB_READ_WRITE_TOKEN) {
-  console.error("Set BLOB_READ_WRITE_TOKEN (Vercel dashboard -> Storage -> your Blob store -> .env.local).");
+// Auth: BLOB_READ_WRITE_TOKEN, or OIDC (VERCEL_OIDC_TOKEN + BLOB_STORE_ID, both from `vercel env pull`).
+const { BLOB_READ_WRITE_TOKEN, VERCEL_OIDC_TOKEN, BLOB_STORE_ID } = process.env;
+if (!local && !BLOB_READ_WRITE_TOKEN && !(VERCEL_OIDC_TOKEN && BLOB_STORE_ID)) {
+  console.error("Missing Blob credentials. Connect the Blob store to the Development environment, then run `npx vercel env pull .env.local`.");
   process.exit(1);
 }
 

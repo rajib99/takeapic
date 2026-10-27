@@ -20,7 +20,7 @@ Client photos/videos are not in git. They're optimized, uploaded to Vercel Blob,
 referenced through `src/lib/media-manifest.json` (key -> URL + size).
 
 1. `npm run media:prepare -- "/path/to/take a pic photos"` (needs ffmpeg) -> writes `public/media/` (gitignored)
-2. Create a Blob store in Vercel (Storage tab), copy `BLOB_READ_WRITE_TOKEN` into `.env.local`
+2. Create a Blob store in Vercel (Storage tab), connect it to the project including the Development environment, then `npx vercel env pull .env.local`
 3. `npm run media:upload` -> uploads and rewrites the manifest with Blob URLs. Commit the manifest.
 
 `npm run media:local` writes a manifest pointing at `public/media/` for local preview only;

@@ -8,7 +8,7 @@ export function Footer() {
     <footer className="footer">
       <div className="wrap footer-in">
         <div>
-          <Image src={media("logo.png").url} alt={`${SITE.name} logo`} width={72} height={72} />
+          <Image src={media("logo-v2.png").url} alt={`${SITE.name} logo`} width={72} height={72} />
           <strong>{SITE.name}</strong>
           <p>{SITE.tagline} Serving {SITE.area}.</p>
           <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>

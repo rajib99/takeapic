@@ -16,7 +16,10 @@ vid() { # src dest-without-ext [audio|-] [poster-second]
   ffmpeg -v error -y -ss "${4:-2}" -i "$1" -frames:v 1 -vf "scale='min(720,iw)':-2" -q:v 4 "$OUT/$2.jpg"
 }
 
-ffmpeg -v error -y -i "$SRC/logo-transparent.png" -vf scale=320:-1 "$OUT/logo.png"
+# Round badge on black -> transparent circle. New file name = cache-busted URL.
+logo() { ffmpeg -v error -y -i "$SRC/logo-round.jpeg" -vf "crop='min(iw,ih)':'min(iw,ih)',scale=$1:$1,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-$1/2,Y-$1/2),$1/2-1),255,0)'" "$2"; }
+logo 320 "$OUT/logo-v2.png"
+logo 192 "$(dirname "$OUT")/../src/app/icon.png"
 
 vid "$SRC/Robot-feature.mp4" hero/robot-feature audio
 

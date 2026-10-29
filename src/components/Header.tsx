@@ -15,7 +15,7 @@ export function Header() {
   return (
     <header className="header">
       <div className="wrap header-in">
-        <Link href="/" className="logo"><Image src={media("logo.png").url} alt={`${SITE.name} logo`} width={48} height={48} priority />{SITE.name}</Link>
+        <Link href="/" className="logo"><Image src={media("logo-v2.png").url} alt={`${SITE.name} logo`} width={48} height={48} priority />{SITE.name}</Link>
         <nav aria-label="Main">
           {links.map(([href, label]) => (
             <Link key={href} href={href}>{label}</Link>

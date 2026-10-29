@@ -1,44 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { JsonLd } from "@/components/JsonLd";
-import { BOOTHS, SITE } from "@/lib/config";
+import { getSite } from "@/lib/content";
+import { SITE_URL } from "@/lib/config";
 
 export const viewport: Viewport = { themeColor: "#0f0f1a" };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url),
-  title: { default: "Take a pic | Robot Photo Booth Rental in New York", template: "%s | Take a pic" },
-  description:
-    "Photo booth rental with an AI robot photographer and a 360° drone camera. Weddings, corporate events and parties in New York. Book online in minutes.",
-  alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: SITE.name, url: SITE.url, title: "Take a pic | Robot Photo Booth Rental", description: SITE.tagline },
-  twitter: { card: "summary_large_image" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t, site } = await getSite();
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: { default: t("site.seo.title"), template: `%s | ${site.name}` },
+    description: t("site.seo.description"),
+    alternates: { canonical: "/" },
+    openGraph: { type: "website", siteName: site.name, url: SITE_URL, title: t("site.seo.title"), description: site.tagline },
+    twitter: { card: "summary_large_image" },
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <JsonLd
-          data={{
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            name: SITE.name,
-            url: SITE.url,
-            description: "Photo booth rental featuring an AI robot photographer and drone-supported 360° camera.",
-            email: SITE.email,
-            ...(SITE.phone && { telephone: SITE.phone }),
-            areaServed: SITE.area,
-            priceRange: "$$",
-            makesOffer: BOOTHS.map((b) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: b.name, description: b.short } })),
-          }}
-        />
-        <Header />
-        <main>{children}</main>
-        <Footer />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

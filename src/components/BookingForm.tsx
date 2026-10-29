@@ -1,15 +1,16 @@
 "use client";
 import { useState } from "react";
-import { ADDONS, BOOTHS, DEPOSIT_PCT, EVENT_TYPES, PACKAGES, money, quote } from "@/lib/config";
+import { catalog, EVENT_TYPES, money, type CatalogData } from "@/lib/config";
 
-export function BookingForm({ initial }: { initial: string }) {
-  const [pkgId, setPkgId] = useState(PACKAGES.some((p) => p.id === initial) ? initial : "takeapic:3h");
+export function BookingForm({ initial, data, labels: L }: { initial: string; data: CatalogData; labels: Record<string, string> }) {
+  const cat = catalog(data);
+  const [pkgId, setPkgId] = useState(() => (cat.packages.some((p) => p.id === initial) ? initial : (cat.packages.find((p) => p.tier.featured) ?? cat.packages[0]).id));
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const q = quote(pkgId, addOnIds)!;
+  const q = cat.quote(pkgId, addOnIds)!;
   const toggleAddOn = (id: string) => setAddOnIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
-  const travel = ADDONS.find((a) => a.quoted);
+  const travel = cat.addons.find((a) => a.quoted);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,10 +37,10 @@ export function BookingForm({ initial }: { initial: string }) {
   return (
     <form onSubmit={submit} className="form card">
       <fieldset>
-        <legend>1. Choose your booth & package</legend>
-        <label>Package
+        <legend>{L["book.l1"]}</legend>
+        <label>{L["book.package"]}
           <select value={pkgId} onChange={(e) => setPkgId(e.target.value)}>
-            {BOOTHS.map((b) => (
+            {cat.booths.map((b) => (
               <optgroup key={b.slug} label={b.name}>
                 {b.tiers.map((t) => <option key={t.id} value={`${b.slug}:${t.id}`}>{t.name} ({t.hours} hrs): {money(t.price)}</option>)}
               </optgroup>
@@ -49,9 +50,9 @@ export function BookingForm({ initial }: { initial: string }) {
         <p className="muted small">{q.pkg.tier.features.join(" · ")}</p>
       </fieldset>
       <fieldset>
-        <legend>2. Add-ons <span className="muted small">(optional)</span></legend>
+        <legend>{L["book.l2"]} <span className="muted small">{L["book.optional"]}</span></legend>
         <div className="radios">
-          {ADDONS.filter((a) => !a.quoted).map((a) => (
+          {cat.addons.filter((a) => !a.quoted).map((a) => (
             <label key={a.id} className={addOnIds.includes(a.id) ? "on" : ""}>
               <input type="checkbox" checked={addOnIds.includes(a.id)} onChange={() => toggleAddOn(a.id)} />
               {a.icon} {a.name} <span>+${a.price}</span>
@@ -61,28 +62,28 @@ export function BookingForm({ initial }: { initial: string }) {
         {travel && <p className="muted small">{travel.name}: {travel.blurb}</p>}
       </fieldset>
       <fieldset>
-        <legend>3. Your event</legend>
-        <label>Event date<input type="date" name="date" min={today} required /></label>
-        <label>Event type
+        <legend>{L["book.l3"]}</legend>
+        <label>{L["book.date"]}<input type="date" name="date" min={today} required /></label>
+        <label>{L["book.type"]}
           <select name="eventType" required defaultValue="">
-            <option value="" disabled>Select…</option>
+            <option value="" disabled>{L["book.select"]}</option>
             {EVENT_TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </label>
-        <label>Venue / address<input name="venue" autoComplete="off" /></label>
-        <label>Approx. guests<input name="guests" inputMode="numeric" /></label>
+        <label>{L["book.venue"]}<input name="venue" autoComplete="off" /></label>
+        <label>{L["book.guests"]}<input name="guests" inputMode="numeric" /></label>
       </fieldset>
       <fieldset>
-        <legend>4. Your details</legend>
-        <label>Full name<input name="name" autoComplete="name" required /></label>
-        <label>Email<input type="email" name="email" autoComplete="email" required /></label>
-        <label>Phone<input type="tel" name="phone" autoComplete="tel" /></label>
-        <label>Anything else we should know?<textarea name="notes" rows={3} maxLength={450} /></label>
+        <legend>{L["book.l4"]}</legend>
+        <label>{L["book.name"]}<input name="name" autoComplete="name" required /></label>
+        <label>{L["book.email"]}<input type="email" name="email" autoComplete="email" required /></label>
+        <label>{L["book.phone"]}<input type="tel" name="phone" autoComplete="tel" /></label>
+        <label>{L["book.notes"]}<textarea name="notes" rows={3} maxLength={450} /></label>
       </fieldset>
       {error && <p className="error" role="alert">{error}</p>}
-      <p className="total">Total <strong>{money(q.total)}</strong> <span className="muted small">{DEPOSIT_PCT}% deposit today: {money(q.deposit)}</span></p>
-      <button className="btn" disabled={busy}>{busy ? "Redirecting to Stripe…" : `Pay ${money(q.deposit)} deposit`}</button>
-      <p className="muted small">Secure payment by Stripe. The remaining balance is due before your event.</p>
+      <p className="total">{L["book.total"]} <strong>{money(q.total)}</strong> <span className="muted small">{L["book.depositToday"].replace("{pct}", String(data.depositPct))} {money(q.deposit)}</span></p>
+      <button className="btn" disabled={busy}>{busy ? L["book.redirecting"] : L["book.pay"].replace("{amount}", money(q.deposit))}</button>
+      <p className="muted small">{L["book.secure"]}</p>
     </form>
   );
 }

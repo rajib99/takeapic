@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEPOSIT_PCT, SITE, EVENT_TYPES, quote } from "@/lib/config";
+import { EVENT_TYPES, SITE_URL } from "@/lib/config";
+import { getSite } from "@/lib/content";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -11,7 +12,8 @@ export async function POST(req: Request) {
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
   const addOnIds = Array.isArray(body.addOns) ? body.addOns.filter((x: unknown): x is string => typeof x === "string") : [];
-  const q = typeof body.packageId === "string" ? quote(body.packageId, addOnIds) : null;
+  const { cat } = await getSite();
+  const q = typeof body.packageId === "string" ? cat.quote(body.packageId, addOnIds) : null;
   const name = clean(body.name);
   const email = clean(body.email);
   const date = clean(body.date, 10);
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
             currency: "usd",
             unit_amount: Math.round(q.deposit * 100),
             product_data: {
-              name: `${q.pkg.name}: ${DEPOSIT_PCT}% deposit`,
+              name: `${q.pkg.name}: ${cat.depositPct}% deposit`,
               description: [
                 `Event date ${date}.`,
                 q.addOns.length ? `Add-ons: ${q.addOns.map((a) => a.name).join(", ")}.` : "",
@@ -61,8 +63,8 @@ export async function POST(req: Request) {
         guests: clean(body.guests, 10),
         notes: clean(body.notes, 450),
       },
-      success_url: `${SITE.url}/book/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE.url}/book?package=${q.pkg.id}`,
+      success_url: `${SITE_URL}/book/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE_URL}/book?package=${q.pkg.id}`,
     });
     return NextResponse.json({ url: session.url });
   } catch (e) {

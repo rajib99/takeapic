@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BOOTHS, fromPrice, money, type BoothSlug } from "@/lib/config";
-import { media } from "@/lib/media";
+import { money, type BoothSlug } from "@/lib/config";
+import { getSite } from "@/lib/content";
 
 const COVER: Record<BoothSlug, string> = {
   takeapic: "robot/studio.jpg",
@@ -10,10 +10,11 @@ const COVER: Record<BoothSlug, string> = {
   "360-photo-booth": "360/photo-01.jpg",
 };
 
-export function BoothCards() {
+export async function BoothCards() {
+  const { t, cat, media } = await getSite();
   return (
     <div className="booths">
-      {BOOTHS.map((b) => {
+      {cat.booths.map((b) => {
         const img = media(COVER[b.slug]);
         return (
           <Link key={b.slug} href={`/${b.slug}`} className="booth-card">
@@ -21,8 +22,8 @@ export function BoothCards() {
             <div className="booth-body">
               <h3>{b.name}</h3>
               <p className="muted">{b.short}</p>
-              <p className="booth-from">From <strong>{money(fromPrice(b))}</strong></p>
-              <span className="booth-more">Explore & pricing →</span>
+              <p className="booth-from">{t("cards.from")} <strong>{money(cat.fromPrice(b))}</strong></p>
+              <span className="booth-more">{t("cards.more")}</span>
             </div>
           </Link>
         );

@@ -1,35 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BOOTHS, SITE } from "@/lib/config";
-import { media } from "@/lib/media";
+import { getSite } from "@/lib/content";
 
-export function Footer() {
+export async function Footer() {
+  const { t, media, site, data } = await getSite();
   return (
     <footer className="footer">
       <div className="wrap footer-in">
         <div>
-          <Image src={media("logo-v2.png").url} alt={`${SITE.name} logo`} width={72} height={72} />
-          <strong>{SITE.name}</strong>
-          <p>{SITE.tagline} Serving {SITE.area}.</p>
-          <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+          <Image src={media("logo-v2.png").url} alt={`${site.name} logo`} width={72} height={72} />
+          <strong>{site.name}</strong>
+          <p>{site.tagline} {t("site.footer.serving", { area: site.area })}</p>
+          <p><a href={`mailto:${site.email}`}>{site.email}</a></p>
+          {site.phone && <p><a href={`tel:${site.phone.replace(/[^+\d]/g, "")}`}>{site.phone}</a></p>}
         </div>
         <div className="footer-cols">
           <div className="footer-links">
-            <strong>Booths</strong>
-            {BOOTHS.map((b) => <Link key={b.slug} href={`/${b.slug}`}>{b.name}</Link>)}
+            <strong>{t("site.footer.booths")}</strong>
+            {data.booths.map((b) => <Link key={b.slug} href={`/${b.slug}`}>{b.name}</Link>)}
           </div>
           <div className="footer-links">
-            <strong>Info</strong>
-            <Link href="/packages">All pricing</Link>
-            <Link href="/gallery">Gallery</Link>
-            <Link href="/how-it-works">How it works</Link>
-            <Link href="/faq">FAQ</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/book">Book</Link>
+            <strong>{t("site.footer.info")}</strong>
+            <Link href="/packages">{t("site.footer.pricing")}</Link>
+            <Link href="/gallery">{t("site.footer.gallery")}</Link>
+            <Link href="/how-it-works">{t("site.footer.how")}</Link>
+            <Link href="/faq">{t("site.footer.faq")}</Link>
+            <Link href="/contact">{t("site.footer.contact")}</Link>
+            <Link href="/book">{t("site.footer.book")}</Link>
           </div>
         </div>
       </div>
-      <p className="wrap copy">© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
+      <p className="wrap copy">© {new Date().getFullYear()} {site.name}. {t("site.footer.rights")}</p>
     </footer>
   );
 }

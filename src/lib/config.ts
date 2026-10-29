@@ -1,9 +1,14 @@
-export const SITE = {
+/** Public origin. Comes from the environment, never from the admin. */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://takeabic.biz";
+
+export type SiteInfo = { name: string; tagline: string; email: string; phone: string; area: string };
+
+// Everything below `DEFAULT_*` is the starting content. The admin saves edits to Vercel Blob
+// (see lib/content.ts) and those win over these defaults.
+export const DEFAULT_SITE: SiteInfo = {
   name: "Take a pic",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://takeabic.biz",
   tagline: "The photo booth run by a robot photographer.",
   email: "bookings@takeabic.biz",
-  // TODO: replace with the client's real phone / service area
   phone: "",
   area: "New York, NY",
 };
@@ -23,7 +28,7 @@ export type Booth = {
 
 // PLACEHOLDER PRICES: the client has not given numbers yet. Edit here only;
 // the server computes the Stripe amount from this file, never from the browser.
-export const BOOTHS: Booth[] = [
+export const DEFAULT_BOOTHS: Booth[] = [
   {
     slug: "takeapic",
     name: "Takeapic AI Robot",
@@ -77,7 +82,7 @@ export const BOOTHS: Booth[] = [
 export type AddOn = { id: string; name: string; price: number; icon: string; blurb: string; quoted?: boolean };
 
 // Same add-ons on every booth. `quoted` ones are shown but not charged online.
-export const ADDONS: AddOn[] = [
+export const DEFAULT_ADDONS: AddOn[] = [
   { id: "gifs", name: "GIFs & Boomerangs", price: 150, icon: "🔁", blurb: "Animated GIFs and looping boomerangs alongside the stills, sized for Instagram and TikTok." },
   { id: "overlay", name: "Custom Overlay", price: 95, icon: "🎨", blurb: "Your names, date, logo or theme designed onto every photo and video." },
   { id: "props", name: "Props Upgrade", price: 75, icon: "🎩", blurb: "Premium prop kit: themed signs, hats, glasses, inflatables and seasonal extras." },
@@ -85,34 +90,15 @@ export const ADDONS: AddOn[] = [
   { id: "travel", name: "Travel Fee", price: 95, icon: "🚐", quoted: true, blurb: "Free within 25 miles of Midtown Manhattan. Further out starts at $95 and is confirmed after booking." },
 ];
 
-export const DEPOSIT_PCT = 30;
+export const DEFAULT_DEPOSIT_PCT = 30;
 
 /** "$1,295" or "$388.50" */
 export const money = (n: number) =>
   "$" + n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
-export const depositOf = (price: number) => Math.round(price * DEPOSIT_PCT) / 100;
-
-/** Every bookable tier, flattened. id is `${booth.slug}:${tier.id}`. */
-export const PACKAGES = BOOTHS.flatMap((booth) =>
-  booth.tiers.map((tier) => ({ id: `${booth.slug}:${tier.id}`, name: `${booth.name}: ${tier.name}`, price: tier.price, booth, tier })),
-);
-export type Package = (typeof PACKAGES)[number];
-
-export const boothBySlug = (slug: BoothSlug) => BOOTHS.find((b) => b.slug === slug)!;
-export const fromPrice = (b: Booth) => Math.min(...b.tiers.map((t) => t.price));
-
-/** Total and deposit for a package plus add-ons. Used by the form and, authoritatively, by checkout. */
-export function quote(packageId: string, addOnIds: string[] = []) {
-  const pkg = PACKAGES.find((p) => p.id === packageId);
-  if (!pkg) return null;
-  const addOns = ADDONS.filter((a) => !a.quoted && addOnIds.includes(a.id));
-  const total = pkg.price + addOns.reduce((sum, a) => sum + a.price, 0);
-  return { pkg, addOns, total, deposit: depositOf(total) };
-}
 
 export const EVENT_TYPES = ["Wedding", "Corporate event", "Birthday / Party", "Brand activation", "Other"] as const;
 
-export const FAQS = [
+export const DEFAULT_FAQS: Faq[] = [
   {
     q: "What makes Take a pic different from other photo booth rentals?",
     a: "We bring a robot photographer. It roams your event taking candid, magazine-style photos, and a companion drone supports our 360° camera for coverage that traditional booths can't match.",
@@ -142,8 +128,50 @@ export const FAQS = [
 // PLACEHOLDER REVIEWS: sample copy so the section can be designed. Replace with
 // real client reviews (with their permission) before launch, or empty the array
 // to hide the section. Publishing invented reviews is illegal under FTC rules.
-export const TESTIMONIALS: { quote: string; name: string; event: string }[] = [
+export type Testimonial = { quote: string; name: string; event: string };
+export type Faq = { q: string; a: string };
+export const DEFAULT_TESTIMONIALS: Testimonial[] = [
   { quote: "The robot was the star of our wedding. Guests kept chasing it around the dance floor for one more photo, and the prints were gorgeous.", name: "Sample Client", event: "Wedding, Brooklyn" },
   { quote: "The magazine booth made every guest feel like a celebrity. We still see the cover photos all over Instagram.", name: "Sample Client", event: "Sweet 16, Queens" },
   { quote: "Setup was quick, the team was professional and the branded screen was perfect for our product launch.", name: "Sample Client", event: "Brand activation, Manhattan" },
 ];
+
+/** Everything the admin can edit as structured data (as opposed to single text strings). */
+export type CatalogData = {
+  site: SiteInfo;
+  depositPct: number;
+  booths: Booth[];
+  addons: AddOn[];
+  faqs: Faq[];
+  testimonials: Testimonial[];
+};
+
+export const DEFAULT_DATA: CatalogData = {
+  site: DEFAULT_SITE,
+  depositPct: DEFAULT_DEPOSIT_PCT,
+  booths: DEFAULT_BOOTHS,
+  addons: DEFAULT_ADDONS,
+  faqs: DEFAULT_FAQS,
+  testimonials: DEFAULT_TESTIMONIALS,
+};
+
+/** Pricing helpers over a CatalogData. Pure, so the booking form can run it in the browser too. */
+export function catalog(data: CatalogData) {
+  const depositOf = (price: number) => Math.round(price * data.depositPct) / 100;
+  /** Every bookable tier, flattened. id is `${booth.slug}:${tier.id}`. */
+  const packages = data.booths.flatMap((booth) =>
+    booth.tiers.map((tier) => ({ id: `${booth.slug}:${tier.id}`, name: `${booth.name}: ${tier.name}`, price: tier.price, booth, tier })),
+  );
+  const boothBySlug = (slug: BoothSlug) => data.booths.find((b) => b.slug === slug)!;
+  const fromPrice = (b: Booth) => Math.min(...b.tiers.map((t) => t.price));
+  /** Total and deposit for a package plus add-ons. Used by the form and, authoritatively, by checkout. */
+  const quote = (packageId: string, addOnIds: string[] = []) => {
+    const pkg = packages.find((p) => p.id === packageId);
+    if (!pkg) return null;
+    const addOns = data.addons.filter((a) => !a.quoted && addOnIds.includes(a.id));
+    const total = pkg.price + addOns.reduce((sum, a) => sum + a.price, 0);
+    return { pkg, addOns, total, deposit: depositOf(total) };
+  };
+  return { ...data, depositOf, packages, boothBySlug, fromPrice, quote };
+}
+export type Catalog = ReturnType<typeof catalog>;

@@ -4,6 +4,7 @@
 //   npm run media:local   -> manifest points at /media/* for local preview only
 import { put } from "@vercel/blob";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -29,7 +30,10 @@ for (const file of walk(DIR).filter((f) => !f.endsWith(".DS_Store")).sort()) {
   const key = relative(DIR, file);
   let url = `/media/${key}`;
   if (!local) {
-    ({ url } = await put(`takeapic/${key}`, readFileSync(file), {
+    // Content hash in the name: a replaced file gets a new URL, so the 1-year cache never serves stale media.
+    const body = readFileSync(file);
+    const hash = createHash("sha256").update(body).digest("hex").slice(0, 8);
+    ({ url } = await put(`takeapic/${key.replace(/(\.[^.]+)$/, `-${hash}$1`)}`, body, {
       access: "public",
       addRandomSuffix: false,
       allowOverwrite: true,

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LazyVideo } from "@/components/LazyVideo";
 import { mediaIn, video } from "@/lib/media";
+import { boothBySlug, fromPrice, money } from "@/lib/config";
 
 const POINTS = [
   ["Life-size lit cover frame", "Step inside a glowing magazine cover, big enough for the whole squad."],
@@ -10,7 +11,9 @@ const POINTS = [
   ["Front & backside shots", "Pose for the cover, then turn around for the behind-the-scenes shot."],
 ] as const;
 
-export function VogueBooth() {
+export function VogueBooth({ pricingHref = "/magazine-photo-booth", headingAs: H = "h2" }: { pricingHref?: string; headingAs?: "h1" | "h2" }) {
+  const booth = boothBySlug("magazine-photo-booth");
+  const featured = booth.tiers.find((t) => t.featured)!;
   const demo = video("vogue/demo");
   const frame = video("vogue/frame");
   const covers = mediaIn("vogue").filter((m) => m.url.includes("/cover-"));
@@ -23,14 +26,14 @@ export function VogueBooth() {
         </div>
         <div>
           <p className="vogue-kicker">The Vogue Magazine Booth</p>
-          <h2 className="vogue-title">Be the cover story.</h2>
+          <H className="vogue-title">Be the cover story.</H>
           <p className="vogue-lead">Every guest becomes the face of the issue. A life-size, back-lit magazine cover turns your party into a fashion shoot, and the photos look like they belong on a newsstand.</p>
           <ol className="vogue-points">
             {POINTS.map(([t, d]) => <li key={t}><strong>{t}</strong><span>{d}</span></li>)}
           </ol>
           <div className="actions">
-            <Link className="btn btn-dark" href="/book?package=lux">Book the magazine booth</Link>
-            <Link className="vogue-link" href="/packages">Included in Lux →</Link>
+            <Link className="btn btn-dark" href={`/book?package=${booth.slug}:${featured.id}`}>Book the magazine booth</Link>
+            <Link className="vogue-link" href={pricingHref}>Packages from {money(fromPrice(booth))} →</Link>
           </div>
         </div>
       </div>

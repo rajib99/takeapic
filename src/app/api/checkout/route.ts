@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PACKAGES, SITE, depositFor, EVENT_TYPES } from "@/lib/config";
+import { DEPOSIT_PCT, SITE, EVENT_TYPES, quote } from "@/lib/config";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -10,13 +10,14 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const pkg = PACKAGES.find((p) => p.id === body.packageId);
+  const addOnIds = Array.isArray(body.addOns) ? body.addOns.filter((x: unknown): x is string => typeof x === "string") : [];
+  const q = typeof body.packageId === "string" ? quote(body.packageId, addOnIds) : null;
   const name = clean(body.name);
   const email = clean(body.email);
   const date = clean(body.date, 10);
   const eventType = clean(body.eventType);
 
-  if (!pkg || !name || !/^\S+@\S+\.\S+$/.test(email) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  if (!q || !name || !/^\S+@\S+\.\S+$/.test(email) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Please complete all required fields." }, { status: 400 });
   }
   if (new Date(date) < new Date(new Date().toDateString())) {
@@ -35,16 +36,22 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency: "usd",
-            unit_amount: Math.round(depositFor(pkg) * 100),
+            unit_amount: Math.round(q.deposit * 100),
             product_data: {
-              name: `${pkg.name} package: ${pkg.depositPct}% deposit`,
-              description: `Event date ${date}. Total package price $${pkg.price}.`,
+              name: `${q.pkg.name}: ${DEPOSIT_PCT}% deposit`,
+              description: [
+                `Event date ${date}.`,
+                q.addOns.length ? `Add-ons: ${q.addOns.map((a) => a.name).join(", ")}.` : "",
+                `Total $${q.total}.`,
+              ].filter(Boolean).join(" "),
             },
           },
         },
       ],
       metadata: {
-        package: pkg.id,
+        package: q.pkg.id,
+        addOns: q.addOns.map((a) => a.id).join(","),
+        total: String(q.total),
         name,
         email,
         phone: clean(body.phone, 30),
@@ -55,7 +62,7 @@ export async function POST(req: Request) {
         notes: clean(body.notes, 450),
       },
       success_url: `${SITE.url}/book/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE.url}/book?package=${pkg.id}`,
+      cancel_url: `${SITE.url}/book?package=${q.pkg.id}`,
     });
     return NextResponse.json({ url: session.url });
   } catch (e) {

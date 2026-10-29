@@ -3,14 +3,14 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "How It Works",
-  description: "Book a robot photo booth in four steps: choose a package, pay a deposit, we set up, your guests get their photos instantly.",
+  description: "Book a photo booth in four steps: choose a booth and package, pay a deposit, we set up, your guests get their photos instantly.",
   alternates: { canonical: "/how-it-works" },
 };
 
 const steps = [
-  ["Choose your package", "Basic, Premium or Lux. Tell us your date, venue and event type."],
+  ["Choose your booth", "Pick the Takeapic robot, Magic Mirror, Magazine or 360 booth, a package and any add-ons."],
   ["Pay a deposit", "Secure checkout through Stripe holds your date instantly."],
-  ["We set up", "Our team arrives early with the robot, mirror booth, red carpet, backdrop and 360 gear."],
+  ["We set up", "Our team arrives early with everything you booked, from the robot to the red carpet."],
   ["Guests get their photos", "Photos and 360 videos are shared on the spot and in an online gallery."],
 ];
 

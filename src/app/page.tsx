@@ -3,7 +3,7 @@ import { HeroVideo } from "@/components/HeroVideo";
 import { RobotIntro } from "@/components/RobotIntro";
 import { VogueBooth } from "@/components/VogueBooth";
 import { EventGallery, highlightPhotos } from "@/components/EventGallery";
-import { PackageCards } from "@/components/PackageCards";
+import { BoothCards } from "@/components/BoothCards";
 import { TESTIMONIALS } from "@/lib/config";
 import { video } from "@/lib/media";
 
@@ -17,7 +17,7 @@ export default function Home() {
           <p className="lead">An AI robot roams your event shooting magazine-worthy photos, while our drone sidekick captures every angle in 360°. Nobody else in New York has one.</p>
           <div className="actions">
             <Link className="btn" href="/book">Book your date</Link>
-            <Link className="btn btn-ghost" href="/packages">See packages</Link>
+            <a className="btn btn-ghost" href="#booths">See our booths</a>
           </div>
         </div>
         <div className="hero-art"><HeroVideo src={hero.src.url} poster={hero.poster.url} /></div>
@@ -38,11 +38,11 @@ export default function Home() {
 
       <VogueBooth />
 
-      <section id="packages">
+      <section id="booths">
         <div className="wrap">
-          <h2 className="center">Pick your package</h2>
-          <p className="center muted">Basic, Premium or Lux. Pay a deposit online to lock your date.</p>
-          <PackageCards />
+          <h2 className="center">Choose your experience</h2>
+          <p className="center muted">Four booths, each with its own packages and add-ons. Book one, or mix them for the full show.</p>
+          <BoothCards />
         </div>
       </section>
 

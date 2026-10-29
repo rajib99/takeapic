@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SITE } from "@/lib/config";
+import { BOOTHS, SITE } from "@/lib/config";
 import { media } from "@/lib/media";
 
 export function Footer() {
@@ -13,13 +13,20 @@ export function Footer() {
           <p>{SITE.tagline} Serving {SITE.area}.</p>
           <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
         </div>
-        <div className="footer-links">
-          <Link href="/packages">Packages</Link>
-          <Link href="/how-it-works">How it works</Link>
-          <Link href="/gallery">Gallery</Link>
-          <Link href="/faq">FAQ</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/book">Book</Link>
+        <div className="footer-cols">
+          <div className="footer-links">
+            <strong>Booths</strong>
+            {BOOTHS.map((b) => <Link key={b.slug} href={`/${b.slug}`}>{b.name}</Link>)}
+          </div>
+          <div className="footer-links">
+            <strong>Info</strong>
+            <Link href="/packages">All pricing</Link>
+            <Link href="/gallery">Gallery</Link>
+            <Link href="/how-it-works">How it works</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/book">Book</Link>
+          </div>
         </div>
       </div>
       <p className="wrap copy">© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>

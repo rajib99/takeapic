@@ -4,11 +4,10 @@ import { SITE } from "@/lib/config";
 import { media } from "@/lib/media";
 
 const links = [
-  ["/packages", "Packages"],
-  ["/how-it-works", "How it works"],
-  ["/gallery", "Gallery"],
-  ["/faq", "FAQ"],
-  ["/contact", "Contact"],
+  ["/takeapic", "Takeapic"],
+  ["/magic-mirror", "Magic Mirror"],
+  ["/magazine-photo-booth", "Magazine Photo Booth"],
+  ["/360-photo-booth", "360 Photo Booth"],
 ];
 
 export function Header() {

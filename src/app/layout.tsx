@@ -3,7 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
-import { SITE } from "@/lib/config";
+import { BOOTHS, SITE } from "@/lib/config";
 
 export const viewport: Viewport = { themeColor: "#0f0f1a" };
 
@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ...(SITE.phone && { telephone: SITE.phone }),
             areaServed: SITE.area,
             priceRange: "$$",
-            makesOffer: ["Basic", "Premium", "Lux"].map((n) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: `${n} photo booth package` } })),
+            makesOffer: BOOTHS.map((b) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: b.name, description: b.short } })),
           }}
         />
         <Header />

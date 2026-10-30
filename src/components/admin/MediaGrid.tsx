@@ -2,11 +2,11 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { addMedia, removeMedia, resetMedia, setMedia } from "@/app/admin/actions";
-import { EXT, IMAGE_TYPES, imageSize, uploadFile, VIDEO_TYPES, videoInfo } from "./upload";
+import { EXT, fileType, IMAGE_TYPES, imageSize, isImageFile, isVideoFile, uploadFile, VIDEO_TYPES, videoInfo } from "./upload";
 
 export type MediaItem = {
   key: string; name: string; kind: "image" | "video"; url: string;
-  posterKey?: string; posterUrl?: string;
+  posterKey?: string; posterUrl?: string; w: number; h: number;
   changed: boolean; added: boolean; hidden: boolean;
 };
 
@@ -36,16 +36,22 @@ function Tile({ item, removable, onDone }: { item: MediaItem; removable: boolean
 
   const replace = (file: File) =>
     act("Uploading…", async () => {
-      if (!(isVideo ? VIDEO_TYPES : IMAGE_TYPES).includes(file.type)) throw new Error(isVideo ? "Choose an MP4 video." : "Choose a JPG, PNG or WebP image.");
+      if (!(isVideo ? isVideoFile(file) : isImageFile(file))) throw new Error(isVideo ? "Choose an MP4 video." : "Choose a JPG, PNG or WebP image.");
+      const typed = new File([file], file.name, { type: fileType(file) });
       if (isVideo) {
-        const info = await videoInfo(file);
-        await must(setMedia(item.key, { url: await uploadFile(file, file.name), w: info.w, h: info.h }));
+        // If this browser can't read the file's size, keep the slot's current size so the layout still works.
+        const info = await videoInfo(typed);
+        const w = info.w || item.w, h = info.h || item.h;
+        await must(setMedia(item.key, { url: await uploadFile(typed, file.name), w, h }));
         if (info.poster && item.posterKey) {
           await must(setMedia(item.posterKey, { url: await uploadFile(info.poster, "poster.jpg"), w: Math.round(info.w), h: Math.round(info.h) }));
+        } else if (item.posterKey) {
+          // No new still available: drop any earlier replacement so the old frame doesn't sit over the new video.
+          await must(resetMedia(item.posterKey));
         }
       } else {
-        const { w, h } = await imageSize(file);
-        await must(setMedia(item.key, { url: await uploadFile(file, file.name), w, h }));
+        const { w, h } = await imageSize(typed);
+        await must(setMedia(item.key, { url: await uploadFile(typed, file.name), w, h }));
       }
     });
 
@@ -64,7 +70,7 @@ function Tile({ item, removable, onDone }: { item: MediaItem; removable: boolean
         {item.hidden && <span className="a-tag a-tag-off">removed</span>}
       </figcaption>
       <div className="a-actions">
-        <input ref={input} type="file" hidden accept={(isVideo ? VIDEO_TYPES : IMAGE_TYPES).join(",")} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) replace(f); }} />
+        <input ref={input} type="file" hidden accept={(isVideo ? [...VIDEO_TYPES, ".mp4", ".mov", ".m4v", ".webm"] : IMAGE_TYPES).join(",")} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) replace(f); }} />
         {item.hidden
           ? <button className="a-btn a-btn-sm" disabled={!!busy} onClick={() => act("Restoring…", () => must(resetMedia(item.key)))}>Restore</button>
           : <button className="a-btn a-btn-sm" disabled={!!busy} onClick={() => input.current?.click()}>{isVideo ? "Replace video" : "Replace"}</button>}
@@ -90,9 +96,10 @@ export function MediaGrid({ folder, canAdd, items }: { folder: string; canAdd: b
     try {
       for (const [i, file] of files.entries()) {
         setBusy(`Uploading ${i + 1} of ${files.length}…`);
-        if (!IMAGE_TYPES.includes(file.type)) throw new Error(`${file.name}: choose JPG, PNG or WebP images.`);
-        const { w, h } = await imageSize(file);
-        await must(addMedia(folder, EXT[file.type], { url: await uploadFile(file, file.name), w, h }));
+        if (!isImageFile(file)) throw new Error(`${file.name}: choose JPG, PNG or WebP images.`);
+        const typed = new File([file], file.name, { type: fileType(file) });
+        const { w, h } = await imageSize(typed);
+        await must(addMedia(folder, EXT[typed.type], { url: await uploadFile(typed, file.name), w, h }));
       }
     } catch (e) {
       setError(msg(e));

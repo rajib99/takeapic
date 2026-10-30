@@ -32,6 +32,8 @@ export default async function MediaPage({ params }: { params: Promise<{ folder: 
         name: k.split("/").pop()!,
         kind: isVideo ? "video" : "image",
         url: c?.url ?? "",
+        w: c?.w ?? 0,
+        h: c?.h ?? 0,
         posterKey: isVideo ? posterKey : undefined,
         posterUrl: isVideo ? current(posterKey)?.url : undefined,
         changed: !!o && !("hidden" in o) && k in MANIFEST,

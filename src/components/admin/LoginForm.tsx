@@ -1,16 +1,18 @@
 "use client";
 import { useActionState } from "react";
-import { requestLink } from "@/app/admin/actions";
+import { signIn } from "@/app/admin/actions";
 
 export function LoginForm() {
-  const [state, action, pending] = useActionState(requestLink, {});
+  const [state, action, pending] = useActionState(signIn, {});
   return (
     <form action={action} className="a-card a-login">
       <label>Admin email
-        <input type="email" name="email" autoComplete="email" required autoFocus />
+        <input type="email" name="email" autoComplete="username" required autoFocus />
       </label>
-      <button className="a-btn" disabled={pending}>{pending ? "Sending…" : "Email me a sign-in link"}</button>
-      {state.message && <p className="a-ok" role="status">{state.message}</p>}
+      <label>Password
+        <input type="password" name="password" autoComplete="current-password" required />
+      </label>
+      <button className="a-btn" disabled={pending}>{pending ? "Signing in…" : "Sign in"}</button>
       {state.error && <p className="a-err" role="alert">{state.error}</p>}
     </form>
   );

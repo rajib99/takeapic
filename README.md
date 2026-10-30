@@ -30,16 +30,14 @@ a Vercel build refuses to deploy with that manifest.
 
 Edit all copy, photos, videos, prices, add-ons, FAQ and testimonials without a deploy. Layout, styles and code are not editable there.
 
-**Access.** Passwordless. Set these in Vercel (Settings → Environment Variables, Production), then redeploy:
+**Access.** Email + password. Set these in Vercel (Settings → Environment Variables, Production), then redeploy:
 
 | Variable | Value |
 |---|---|
-| `ADMIN_EMAILS` | Comma-separated emails allowed in. Only these can request a link. Remove one to revoke that person at once. |
-| `ADMIN_SECRET` | Random string, 24+ chars (`openssl rand -base64 32`). Signs links and sessions; changing it signs everyone out. |
-| `RESEND_API_KEY`, `LEADS_FROM_EMAIL` | Already used for lead emails; the sign-in link is sent the same way. The sender domain must be verified in Resend to email addresses other than your own. |
+| `ADMIN_EMAILS` | Comma-separated emails allowed in. Remove one to revoke that person at once. |
+| `ADMIN_SECRET` | The admin password, 16+ chars (`openssl rand -base64 18`). Also signs the session cookie; changing it signs everyone out. |
 
-Go to `/admin`, enter an allowed email, open the emailed link (valid 15 minutes). The browser then stays signed in for 90 days.
-Locally (`npm run dev`) without Resend, the link is printed in the terminal.
+Go to `/admin` and sign in with an allowed email and the `ADMIN_SECRET` value. The browser then stays signed in for 90 days. Five wrong attempts lock that client out for 15 minutes. No email service is needed.
 
 **Where edits live.** Each save writes `takeapic/content/<timestamp>.json` to Vercel Blob; the newest wins and the last 20 are kept as history (to roll back, delete the newest file in the Blob dashboard). Photos/videos the admin uploads go to `takeapic/uploads/`. With no saved file the site shows the defaults in `src/lib/text.ts`, `src/lib/config.ts` and the media manifest.
 Set `CONTENT_DIR` to point a preview deployment at its own folder.

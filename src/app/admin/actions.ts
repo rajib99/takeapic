@@ -1,10 +1,9 @@
 "use server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminConfigured, COOKIE, getAdmin, isAdminEmail, LINK_SECONDS, signToken } from "@/lib/admin-auth";
-import { SITE_URL, type CatalogData } from "@/lib/config";
+import { adminConfigured, COOKIE, getAdmin, isAdminEmail, passwordMatches, sessionCookie } from "@/lib/admin-auth";
+import { type CatalogData } from "@/lib/config";
 import { updateStored } from "@/lib/content";
-import { sendMail } from "@/lib/mail";
 import { MANIFEST } from "@/lib/media";
 import { ADDABLE } from "@/lib/media-folders";
 import { sanitizers, sanitizeTextEdits } from "@/lib/validate";
@@ -13,30 +12,33 @@ type Result = { ok: true } | { ok: false; error: string };
 const NOT_SIGNED_IN: Result = { ok: false, error: "Your session has expired. Reload the page and sign in again." };
 
 // ── Sign in ────────────────────────────────────────────────────────────────
-const lastSent = new Map<string, number>();
+type LoginState = { error?: string };
 
-type LoginState = { message?: string; error?: string };
+// Failed attempts per client, in memory (per server instance): 5 misses locks it out for 15 minutes.
+const misses = new Map<string, { n: number; until: number }>();
+const MAX_MISSES = 5;
+const LOCK_MS = 15 * 60_000;
 
-export async function requestLink(_prev: LoginState, form: FormData): Promise<LoginState> {
+export async function signIn(_prev: LoginState, form: FormData): Promise<LoginState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
-  if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 200) return { error: "Enter a valid email address." };
+  const password = String(form.get("password") ?? "");
   if (!adminConfigured()) return { error: "Admin sign-in is not set up yet. Add ADMIN_EMAILS and ADMIN_SECRET in Vercel." };
 
-  // Same answer whether or not the address is allowed, so this can't be used to discover admins.
-  const reply = { message: "If that address has admin access, a sign-in link is on its way. It works for 15 minutes." };
-  if (!isAdminEmail(email)) return reply;
-  if (Date.now() - (lastSent.get(email) ?? 0) < 60_000) return reply;
-  lastSent.set(email, Date.now());
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() ?? "local";
+  const slot = misses.get(ip);
+  if (slot && slot.n >= MAX_MISSES && slot.until > Date.now()) return { error: "Too many attempts. Try again in 15 minutes." };
 
-  // Production links always use the configured site URL (never the Host header, which a caller controls).
-  const base = process.env.NODE_ENV === "production" ? SITE_URL : `http://${(await headers()).get("host")}`;
-  const link = `${base}/admin/verify?token=${signToken("login", email, LINK_SECONDS)}`;
-  const sent = await sendMail(email, "Your Take a pic admin sign-in link", `Open this link to sign in to the Take a pic admin. It expires in 15 minutes, and you'll stay signed in on this browser for 3 months.\n\n${link}\n\nIf you didn't ask for this, you can ignore this email.`);
-  if (!sent) {
-    if (process.env.NODE_ENV === "production") return { error: "The email could not be sent. Check that RESEND_API_KEY is set in Vercel." };
-    console.log(`\n[admin] Sign-in link for ${email} (dev only, Resend not configured):\n${link}\n`);
+  // Evaluate both checks so the answer and timing don't reveal which one was wrong.
+  const okPassword = passwordMatches(password);
+  const okEmail = isAdminEmail(email);
+  if (!okPassword || !okEmail) {
+    misses.set(ip, { n: (slot && slot.until > Date.now() ? slot.n : 0) + 1, until: Date.now() + LOCK_MS });
+    return { error: "Wrong email or password." };
   }
-  return reply;
+  misses.delete(ip);
+  const c = sessionCookie(email);
+  (await cookies()).set(c.name, c.value, c.options);
+  redirect("/admin");
 }
 
 export async function logout() {

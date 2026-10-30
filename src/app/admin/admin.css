@@ -74,8 +74,9 @@
 .a-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: 14px; }
 .a-tile { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; align-content: start; gap: 8px; padding-bottom: 10px; }
 .a-tile.is-hidden { opacity: .6; }
-.a-preview { aspect-ratio: 4 / 5; background: #000; display: grid; }
-.a-preview img, .a-preview video { width: 100%; height: 100%; object-fit: cover; }
+.a-preview { position: relative; aspect-ratio: 4 / 5; background: #000; overflow: hidden; }
+/* Absolute so a tall video can never stretch the box and push the buttons out of the tile. */
+.a-preview img, .a-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .a-tile figcaption { padding: 0 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .8rem; word-break: break-all; }
 .a-tag { background: color-mix(in srgb, var(--brand) 18%, transparent); color: var(--brand); border-radius: 99px; padding: 0 7px; font-size: .7rem; font-weight: 600; }
 .a-tag-off { background: color-mix(in srgb, var(--err) 18%, transparent); color: var(--err); }
